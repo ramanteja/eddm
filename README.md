@@ -1,66 +1,137 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# EDDM (Electronic Drug Dispensing Machine)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel + Filament-based web application for managing and dispensing medicines via Raspberry Pi-controlled vending machines.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Role-based access: `SuperAdmin`, `Admin`, `User`
+- REST API support for Raspberry Pi:
+  - `GET /api/next-order`
+  - `POST /api/dispense`
+- Real-time order and payment status tracking
+- Stock-based validation with dispenser slot assignment
+- Role-specific views and permissions (users can only see/edit their own orders)
+- Filament-based admin dashboard
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🛠️ Installation & Setup
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 1. Clone the Repository
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```bash
+git clone https://github.com/ramanteja/eddm.git
+cd eddm
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 2. Install Dependencies
 
-## Laravel Sponsors
+```bash
+composer install
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+If you use frontend assets (like Tailwind/CSS via Filament):
 
-### Premium Partners
+```bash
+npm install && npm run build
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### 3. Environment Setup
 
-## Contributing
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Update the `.env` file with your database credentials and other required settings.
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 🧱 Database Migration
 
-## Security Vulnerabilities
+```bash
+php artisan migrate
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+> Note: No seeders are included. Use Laravel Tinker to create the first SuperAdmin:
 
-## License
+```bash
+php artisan tinker
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```php
+$user = \App\Models\User::create([
+    'name' => 'Super Admin',
+    'email' => 'admin@example.com',
+    'password' => bcrypt('password'),
+]);
+
+$user->assignRole('SuperAdmin');
+```
+
+Then log in as the SuperAdmin to create dispensers, medicines, users, and orders.
+
+---
+
+## 📡 API Endpoints for Raspberry Pi
+
+> These endpoints use **Bearer Token Authentication**
+
+### ➤ Get the next order
+
+```http
+GET /api/next-order
+Authorization: Bearer <token>
+```
+
+### ➤ Mark order as dispensed
+
+```http
+POST /api/dispense
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "order_id": 3
+}
+```
+
+---
+
+## 🧩 Role-Based Access
+
+- **SuperAdmin**: Full access to everything
+- **Admin**: Can manage dispensers, medicines, users, and orders
+- **User**:
+  - Can only view and manage their own orders (before payment)
+  - Cannot edit status or payment after order is marked paid
+  - Cannot delete orders
+
+---
+
+## 💡 Notes
+
+- Users see only their orders in the dashboard
+- Quantity is validated against stock both while creating and editing orders
+- Clean error handling with Filament notifications
+- Payment status and status fields are protected from modification by regular users
+
+---
+
+## 📌 To-Do / Ideas
+
+- Add Webhook or WebSocket support for real-time sync with Raspberry Pi
+- Enable QR code generation for order verification
+- Optional Stripe or Razorpay integration for online payments
+- Auto-dispenser assignment based on availability
+
+---
+
+## 👨‍💻 Developed By
+
+**Raman Teja**  
+[github.com/ramanteja](https://github.com/ramanteja)
+
+Made with ❤️ using Laravel & Filament
