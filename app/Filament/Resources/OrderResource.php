@@ -79,7 +79,8 @@ class OrderResource extends Resource
                 Forms\Components\Toggle::make('payment_status')
                     ->label('Payment Status')
                     ->required()
-                    ->disabled($isUser), // Always disabled for 'User'
+					->disabled(fn ($get) => $isUser || $get('status') === 'dispensed'), // Always disabled for 'User' and when status is dispensed
+                    //->disabled($isUser), // Always disabled for 'User'
 
                 Forms\Components\Select::make('user_id')
                     ->label('User')

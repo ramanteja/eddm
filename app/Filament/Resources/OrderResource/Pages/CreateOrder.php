@@ -43,6 +43,17 @@ class CreateOrder extends CreateRecord
             $this->halt();
         }
 
+        // Prevent dispatching if payment is not done
+        if (isset($data['status']) && $data['status'] === 'dispensed' && !$data['payment_status']) {
+            Notification::make()
+                ->danger()
+                ->title('Cannot mark as Dispensed')
+                ->body('Payment must be completed before dispatching medicine.')
+                ->send();
+
+            $this->halt();
+        }
+
         $data['spiral'] = $stock->spiral;
 
         return $data;

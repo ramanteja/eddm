@@ -16,7 +16,7 @@ class EditOrder extends EditRecord
     {
         return [
             Actions\DeleteAction::make()
-			->visible(fn () => auth()->user()->hasAnyRole(['Admin', 'SuperAdmin'])),
+                ->visible(fn () => auth()->user()->hasAnyRole(['Admin', 'SuperAdmin'])),
         ];
     }
 
@@ -37,14 +37,25 @@ class EditOrder extends EditRecord
             $data['user_id'] = auth()->id();
         }
 
-        // Allow editing only if payment is NOT done
         $record = $this->record;
 
+        // Block edit if payment is already completed
         if ((int) $record->payment_status === 1) {
             Notification::make()
                 ->title('Payment already completed')
                 ->body('This order cannot be edited after payment is completed.')
                 ->danger()
+                ->send();
+
+            $this->halt();
+        }
+
+        // Prevent dispatching if payment not completed
+        if (isset($data['status']) && $data['status'] === 'dispensed' && !$data['payment_status']) {
+            Notification::make()
+                ->danger()
+                ->title('Cannot mark as Dispensed')
+                ->body('Payment must be completed before dispatching medicine.')
                 ->send();
 
             $this->halt();
